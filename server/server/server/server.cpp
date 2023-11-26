@@ -12,6 +12,8 @@ int main()
 
 	while (true)
 	{
+
+		//Test push
 		// Receive a message from anyone
 		char buffer[1024];
 		std::size_t received = 0;
