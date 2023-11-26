@@ -17,7 +17,7 @@ int main()
 
 	do
 	{
-
+		//Testing adding to one and the other at the same time
 		//Test push
 		// Send a message to 192.168.1.50 on port 55002
 		std::string message = "Hi, I am " + sf::IpAddress::getLocalAddress().toString();
