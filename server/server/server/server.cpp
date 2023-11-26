@@ -9,11 +9,12 @@ int main()
 	socket.bind(55002);
 
 	//std::cout << "Hi, I am " + sf::IpAddress::getLocalAddress().toString();
-
+	std::cout << "Waiting on client joining\n";
 	while (true)
 	{
 
 		//Test push
+		// //Test again again
 		// Receive a message from anyone
 		char buffer[1024];
 		std::size_t received = 0;
