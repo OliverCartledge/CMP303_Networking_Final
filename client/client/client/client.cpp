@@ -17,6 +17,8 @@ int main()
 
 	do
 	{
+
+		//Test push
 		// Send a message to 192.168.1.50 on port 55002
 		std::string message = "Hi, I am " + sf::IpAddress::getLocalAddress().toString();
 		socket.send(message.c_str(), message.size() + 1, sf::IpAddress::getLocalAddress().toString(), 55002);
