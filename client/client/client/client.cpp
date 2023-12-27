@@ -90,7 +90,7 @@ void recievefromServer()
 // Begins rendering to the back buffer. Background colour set to light blue.
 void beginDraw()
 {
-	window->clear(sf::Color(0, 0, 0));
+	window->clear(sf::Color::Black);
 }
 
 // Ends rendering to the back buffer, and swaps buffer to the screen.
@@ -113,8 +113,9 @@ void render()
 	mapText.setSmooth(true);
 	map.setTexture(mapText);
 	map.scale(2, 2);
-
-	window->draw(map);
+	// define a 120x50 rectangle
+	sf::RectangleShape rectangle(sf::Vector2f(120, 50));
+	window->draw(rectangle);
 
 	endDraw();
 }
@@ -155,11 +156,18 @@ int main()
 
 	client.setBlocking(false);
 
+	//Initialise the background texture and sprite
+	sf::Texture floorTexture;
+	sf::Sprite floor;
+	floorTexture.loadFromFile("media/controlsScreen.png");
+	floorTexture.setRepeated(true);
+	floor.setTexture(floorTexture);
+	floor.setTextureRect(sf::IntRect(0, 0, 960, 540));
+
 	while (window.isOpen())
 	{
 		deltaTime = clock.restart().asSeconds();
 		sf::Event event;
-
 		while (window.pollEvent(event)) {
 			if (event.type == sf::Event::Closed)
 				window.close();
@@ -175,9 +183,18 @@ int main()
 				}
 			}
 		}
+		//Render the scene
+		window.clear();
+		window.draw(floor);
+		/*for (auto& tank : tanks) {
+			tank.Render(&window);
+		}
+		window.draw(debugText);*/
+		window.display();
 	}
 
-	render();
+	//render();
+
 
 	return 0;
 }
