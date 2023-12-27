@@ -164,6 +164,11 @@ int main()
 	floor.setTexture(floorTexture);
 	floor.setTextureRect(sf::IntRect(0, 0, 960, 540));
 
+	sf::RectangleShape rectangle(sf::Vector2f(128.0f, 128.0f));
+	rectangle.setFillColor(sf::Color::Red);
+	rectangle.setPosition(320, 240);
+
+
 	while (window.isOpen())
 	{
 		deltaTime = clock.restart().asSeconds();
@@ -181,20 +186,42 @@ int main()
 					//nextPrint = startTime;
 					printf("\n\n--------RESET--------\n\n");
 				}
+				if (event.key.code == sf::Keyboard::Key::W)
+				{
+					//rectangle.setRotation(10);
+					//rectangle.setPostion(getPosition().x);
+					rectangle.setPosition(rectangle.getPosition().x, rectangle.getPosition().y-10);
+				}
+				if (event.key.code == sf::Keyboard::Key::S)
+				{
+					//rectangle.setRotation(10);
+					//rectangle.setPostion(getPosition().x);
+					rectangle.setPosition(rectangle.getPosition().x, rectangle.getPosition().y + 10);
+				}
+				if (event.key.code == sf::Keyboard::Key::A)
+				{
+					//rectangle.setRotation(10);
+					//rectangle.setPostion(getPosition().x);
+					rectangle.setPosition(rectangle.getPosition().x - 10, rectangle.getPosition().y);
+				}
+				if (event.key.code == sf::Keyboard::Key::D)
+				{
+					//rectangle.setRotation(10);
+					//rectangle.setPostion(getPosition().x);
+					rectangle.setPosition(rectangle.getPosition().x + 10, rectangle.getPosition().y);
+				}
 			}
 		}
 		//Render the scene
 		window.clear();
 		window.draw(floor);
+		window.draw(rectangle);
 		/*for (auto& tank : tanks) {
 			tank.Render(&window);
 		}
 		window.draw(debugText);*/
 		window.display();
 	}
-
-	//render();
-
 
 	return 0;
 }
