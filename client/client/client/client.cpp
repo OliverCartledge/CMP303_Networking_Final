@@ -1,45 +1,4 @@
-//#include <SFML/Network/UdpSocket.hpp>
-//#include <iostream>
-//using std::to_string;
-//
-//// The (fixed) size of message that we send between the two programs
-//#define MESSAGESIZE 40
-//
-//int main()
-//{
-//	// Create a socket and bind it to the port 55001
-//	sf::UdpSocket socket;
-//	socket.bind(55001);
-//
-//	int test = 0;
-//
-//	char buffer2[MESSAGESIZE];
-//
-//	do
-//	{
-//		//Testing adding to one and the other at the same time
-//		//Test push
-//		// Send a message to 192.168.1.50 on port 55002
-//		std::string message = "Hi, I am " + sf::IpAddress::getLocalAddress().toString();
-//		socket.send(message.c_str(), message.size() + 1, sf::IpAddress::getLocalAddress().toString(), 55002);
-//
-//		// Receive an answer (most likely from 192.168.1.50, but could be anyone else)
-//		char buffer[1024];
-//		std::size_t received = 0;
-//		sf::IpAddress sender;
-//		unsigned short port;
-//		socket.receive(buffer, sizeof(buffer), received, sender, port);
-//		std::cout << sender.toString() << " said: " << buffer << std::endl;
-//
-//		std::cin >> buffer2;
-//		socket.send(buffer2, MESSAGESIZE, sf::IpAddress::getLocalAddress().toString(), 55002);
-//	} while (memcmp(buffer2, "quit", 4) != 0);
-//
-//
-//
-//	return 0;
-//}
-//
+//https://www.sfml-dev.org/documentation/2.6.0/classsf_1_1SocketSelector.php
 
 #include <iostream>
 #include <SFML/Network.hpp>
@@ -47,7 +6,6 @@
 #include <string>
 #include <chrono>
 #include <box2d/box2d.h>
-
 
 #include<thread>
 #include<vector>
@@ -70,8 +28,6 @@ bool recieved = false;
 sf::RenderWindow* window;
 
 
-
-
 void sendtoServer()
 {
 	client.send(packetSend);
@@ -84,7 +40,9 @@ void recievefromServer()
 		recieved = true;
 	}
 	else
+	{
 		recieved = false;
+	}
 }
 
 // Begins rendering to the back buffer. Background colour set to light blue.
@@ -133,25 +91,27 @@ int main()
 	float deltaTime;
 	int frame_rate;
 
+	float tickTimer = 0;
+
 	//connecting to server and getting playerId 
 	std::string name;
 	std::string IP;
-	cout << "Enter IP: ";
+	std::cout << "Enter IP: ";
 	std::cin >> IP;
 	ip = IP;
-	cout << "\nConnected to " << ip.toString() << "\n";
+	std::cout << "\nConnected to " << ip.toString() << "\n";
 	while (client.connect(ip, 2000) != sf::Socket::Done) {
-		cout << "Failed to connect, trying again...\n";
+		std::cout << "Failed to connect, trying again...\n";
 	}
-	cout << "connected to server\n";
-	cout << "Enter Player Name: ";
+	std::cout << "connected to server\n";
+	std::cout << "Enter Player Name: ";
 	std::cin >> name;
 	packetSend << name;
 	sendtoServer();
 	recievefromServer();
 	packetRecieved >> playerID;
 
-	cout << "\nyou are player: " << playerID << endl;
+	std::cout << "\nyou are player: " << playerID << endl;
 	playerID = playerID - 1;
 
 	client.setBlocking(false);
@@ -164,10 +124,14 @@ int main()
 	floor.setTexture(floorTexture);
 	floor.setTextureRect(sf::IntRect(0, 0, 960, 540));
 
-	sf::RectangleShape rectangle(sf::Vector2f(128.0f, 128.0f));
-	rectangle.setFillColor(sf::Color::Red);
-	rectangle.setPosition(320, 240);
+	sf::RectangleShape rectangles[2];
+	rectangles[0].setSize(sf::Vector2f(128.0f, 128.0f));
+	rectangles[0].setFillColor(sf::Color::Red);
+	rectangles[0].setPosition(320, 240);
 
+	rectangles[1].setSize(sf::Vector2f(128.0f, 128.0f));
+	rectangles[1].setFillColor(sf::Color::Red);
+	rectangles[1].setPosition(640, 240);
 
 	while (window.isOpen())
 	{
@@ -181,47 +145,105 @@ int main()
 				if (event.key.code == sf::Keyboard::Key::Escape)
 					window.close();
 				if (event.key.code == sf::Keyboard::Key::R) {
-					/*tanks[0].Reset(); tanks[1].Reset();
-					netSimulator.Reset();*/
-					//nextPrint = startTime;
-					printf("\n\n--------RESET--------\n\n");
+					std::cout << "--------RESET-------- PLAYER" << playerID << endl;
 				}
 				if (event.key.code == sf::Keyboard::Key::W)
 				{
-					//rectangle.setRotation(10);
-					//rectangle.setPostion(getPosition().x);
-					rectangle.setPosition(rectangle.getPosition().x, rectangle.getPosition().y-10);
+					rectangles[playerID].setPosition(rectangles[playerID].getPosition().x, rectangles[playerID].getPosition().y - 10);
 				}
 				if (event.key.code == sf::Keyboard::Key::S)
 				{
-					//rectangle.setRotation(10);
-					//rectangle.setPostion(getPosition().x);
-					rectangle.setPosition(rectangle.getPosition().x, rectangle.getPosition().y + 10);
+					rectangles[playerID].setPosition(rectangles[playerID].getPosition().x, rectangles[playerID].getPosition().y + 10);
 				}
 				if (event.key.code == sf::Keyboard::Key::A)
 				{
-					//rectangle.setRotation(10);
-					//rectangle.setPostion(getPosition().x);
-					rectangle.setPosition(rectangle.getPosition().x - 10, rectangle.getPosition().y);
+					rectangles[playerID].setPosition(rectangles[playerID].getPosition().x - 10, rectangles[playerID].getPosition().y);
 				}
 				if (event.key.code == sf::Keyboard::Key::D)
 				{
-					//rectangle.setRotation(10);
-					//rectangle.setPostion(getPosition().x);
-					rectangle.setPosition(rectangle.getPosition().x + 10, rectangle.getPosition().y);
+					rectangles[playerID].setPosition(rectangles[playerID].getPosition().x + 10, rectangles[playerID].getPosition().y);
 				}
 			}
 		}
+
+		tickTimer += deltaTime;
+
+		//std::cout << tickTimer << endl;
+
+		//if (tickTimer > 0.05) {
+			packetSend << playerID;
+
+			packetSend << rectangles[playerID].getPosition().x;
+			packetSend << rectangles[playerID].getPosition().y;
+
+			sendtoServer();
+
+			tickTimer = 0;
+	//	}
+
+		recievefromServer();
+
+		if (recieved)
+		{
+			int id;
+			float x, y;
+			packetRecieved >> id >> x >> y;
+			rectangles[id].setPosition(x, y);
+		}
+
+		//if (recieved) {
+		//	int id;
+		//	float x, y;
+		//	packetRecieved >> id >> x >> y;
+		//	sf::Vector2f next{ x, y };
+		//	Data NetMs;
+		//	NetMs.id = id;
+		//	NetMs.player_position = next;
+		//	NetMs.time = time;
+		//	Data LocalMs;
+		//	LocalMs.id = id;
+		//	LocalMs.player_position = rectangles[id].getPosition();
+		//	rectangles[id].prediction.NetworkPositionData(NetMs);
+		//	rectangles[id].prediction.LocalPositionData(LocalMs);
+		//	if (rectangles[id].prediction.NetworkDataHistory.size() == rectangles[id].prediction.quadratic_message_number && rectangles[id].prediction.LocalDataHistory.size() == rectangles[id].prediction.quadratic_message_number)
+		//	{
+
+		//		sf::Vector2f m0_local(rectangles[id].prediction.LocalDataHistory.at(0).player_position);
+		//		sf::Vector2f m1_local(rectangles[id].prediction.LocalDataHistory.at(1).player_position);
+		//		sf::Vector2f m2_local(rectangles[id].prediction.LocalDataHistory.at(2).player_position);
+
+		//		sf::Vector2f m0_network(rectangles[id].prediction.NetworkDataHistory.at(0).player_position);
+		//		sf::Vector2f m1_network(rectangles[id].prediction.NetworkDataHistory.at(1).player_position);
+		//		sf::Vector2f m2_network(rectangles[id].prediction.NetworkDataHistory.at(2).player_position);
+
+		//		float m0_time = rectangles[id].prediction.LocalDataHistory.at(0).time;
+		//		float m1_time = rectangles[id].prediction.LocalDataHistory.at(1).time;
+		//		float m2_time = rectangles[id].prediction.LocalDataHistory.at(2).time;
+
+		//		//float currentTime = getTime();
+
+		//		sf::Vector2f newPos = rectangles[id].prediction.quadraticInterpolation(m0_local, m1_local, m2_local, m0_network, m1_network, m2_network, m0_time, m1_time, m2_time, currentTime);
+		//		rectangles[id].car.setPosition(newPos);
+
+		//		LocalMs.id = id;
+		//		LocalMs.player_position = newPos;
+		//		LocalMs.time = getTime();
+
+		//	}
+
+
 		//Render the scene
 		window.clear();
 		window.draw(floor);
-		window.draw(rectangle);
-		/*for (auto& tank : tanks) {
-			tank.Render(&window);
+		for (int i = 0; i < 2; i++)
+		{
+			window.draw(rectangles[i]);
 		}
-		window.draw(debugText);*/
 		window.display();
-	}
+
+		}
+		
+	
 
 	return 0;
 }
