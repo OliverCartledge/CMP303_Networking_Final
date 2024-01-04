@@ -10,6 +10,8 @@
 #include<thread>
 #include<vector>
 
+#include "Prediction.h"
+
 int width = 1024;
 int height = 768;
 using namespace std;
@@ -24,26 +26,17 @@ sf::Packet packetSend, packetRecieved;
 std::thread recieveThread;
 bool recieved = false;
 
+//Timer stuff
+
+float timer = 0;
+float sendTime = 0;
+float tickTimer = 0;
+
+int predictionType = 1;
+
 
 sf::RenderWindow* window;
 
-
-void sendtoServer()
-{
-	client.send(packetSend);
-	packetSend.clear();
-}
-void recievefromServer()
-{
-	packetRecieved.clear();
-	if (client.receive(packetRecieved) == sf::Socket::Done) {
-		recieved = true;
-	}
-	else
-	{
-		recieved = false;
-	}
-}
 
 // Begins rendering to the back buffer. Background colour set to light blue.
 void beginDraw()
@@ -84,7 +77,7 @@ int main()
 	sf::RenderWindow window(sf::VideoMode(960, 540), "CMP303");
 	window.setFramerateLimit(60);
 
-	
+
 
 	// Initialise objects for delta time
 	sf::Clock clock;
@@ -107,8 +100,13 @@ int main()
 	std::cout << "Enter Player Name: ";
 	std::cin >> name;
 	packetSend << name;
-	sendtoServer();
-	recievefromServer();
+
+	client.send(packetSend);
+	packetSend.clear();
+
+	packetRecieved.clear();
+	client.receive(packetRecieved) == sf::Socket::Done;
+
 	packetRecieved >> playerID;
 
 	std::cout << "\nyou are player: " << playerID << endl;
@@ -124,23 +122,34 @@ int main()
 	floor.setTexture(floorTexture);
 	floor.setTextureRect(sf::IntRect(0, 0, 960, 540));
 
-	sf::RectangleShape rectangles[2];
+	sf::RectangleShape rectangles[4];
+	Prediction prediction[4];
+
 	rectangles[0].setSize(sf::Vector2f(128.0f, 128.0f));
 	rectangles[0].setFillColor(sf::Color::Red);
-	rectangles[0].setPosition(320, 240);
+	rectangles[0].setPosition(320, 140);
 
 	rectangles[1].setSize(sf::Vector2f(128.0f, 128.0f));
 	rectangles[1].setFillColor(sf::Color::Red);
-	rectangles[1].setPosition(640, 240);
+	rectangles[1].setPosition(640, 140);
+
+	rectangles[2].setSize(sf::Vector2f(128.0f, 128.0f));
+	rectangles[2].setFillColor(sf::Color::Red);
+	rectangles[2].setPosition(320, 380);
+
+	rectangles[3].setSize(sf::Vector2f(128.0f, 128.0f));
+	rectangles[3].setFillColor(sf::Color::Red);
+	rectangles[3].setPosition(640, 380);
 
 	while (window.isOpen())
 	{
 		deltaTime = clock.restart().asSeconds();
 		sf::Event event;
+		sendTime += deltaTime;
 		while (window.pollEvent(event)) {
 			if (event.type == sf::Event::Closed)
 				window.close();
-			if (event.type == sf::Event::KeyPressed) 
+			if (event.type == sf::Event::KeyPressed)
 			{
 				if (event.key.code == sf::Keyboard::Key::Escape)
 					window.close();
@@ -163,6 +172,10 @@ int main()
 				{
 					rectangles[playerID].setPosition(rectangles[playerID].getPosition().x + 10, rectangles[playerID].getPosition().y);
 				}
+				if (event.key.code == sf::Keyboard::Key::Z)
+				{
+					predictionType = 1;
+				}
 			}
 		}
 
@@ -170,80 +183,85 @@ int main()
 
 		//std::cout << tickTimer << endl;
 
-		//if (tickTimer > 0.05) {
+		//added tick timer to limit the frequency of positions being sent to reduce lag between clients
+		if (tickTimer > 0.05) {
 			packetSend << playerID;
 
 			packetSend << rectangles[playerID].getPosition().x;
 			packetSend << rectangles[playerID].getPosition().y;
+			packetSend << sendTime;
 
-			sendtoServer();
+			client.send(packetSend);
+			packetSend.clear();
 
 			tickTimer = 0;
-	//	}
-
-		recievefromServer();
-
-		if (recieved)
-		{
-			int id;
-			float x, y;
-			packetRecieved >> id >> x >> y;
-			rectangles[id].setPosition(x, y);
 		}
 
-		//if (recieved) {
-		//	int id;
-		//	float x, y;
-		//	packetRecieved >> id >> x >> y;
-		//	sf::Vector2f next{ x, y };
-		//	Data NetMs;
-		//	NetMs.id = id;
-		//	NetMs.player_position = next;
-		//	NetMs.time = time;
-		//	Data LocalMs;
-		//	LocalMs.id = id;
-		//	LocalMs.player_position = rectangles[id].getPosition();
-		//	rectangles[id].prediction.NetworkPositionData(NetMs);
-		//	rectangles[id].prediction.LocalPositionData(LocalMs);
-		//	if (rectangles[id].prediction.NetworkDataHistory.size() == rectangles[id].prediction.quadratic_message_number && rectangles[id].prediction.LocalDataHistory.size() == rectangles[id].prediction.quadratic_message_number)
-		//	{
+		packetRecieved.clear();
 
-		//		sf::Vector2f m0_local(rectangles[id].prediction.LocalDataHistory.at(0).player_position);
-		//		sf::Vector2f m1_local(rectangles[id].prediction.LocalDataHistory.at(1).player_position);
-		//		sf::Vector2f m2_local(rectangles[id].prediction.LocalDataHistory.at(2).player_position);
+		if (client.receive(packetRecieved) == sf::Socket::Done)
+			{
+					if (predictionType == 0)
+					{
+						int id;
+					float x, y;
+					packetRecieved >> id >> x >> y;
+					rectangles[id].setPosition(x, y);
+					}
+				
+					if (predictionType == 1)
+					{
+						int id, lapCount;
+						float x, y, rotation, time;
+						packetRecieved >> id >> x >> y >> time;
+						sf::Vector2f next{ x, y };
+						Data NetMs;
+						NetMs.id = id;
+						NetMs.playerPosition = next;
+						NetMs.time = time;
+						Data LocalMs;
+						LocalMs.id = id;
+						LocalMs.playerPosition = rectangles[id].getPosition();
+						LocalMs.time = sendTime;
+						prediction[id].NetworkPositionData(NetMs);
+						prediction[id].LocalPositionData(LocalMs);
+						//If there are 3 positions added into the queue then use those values to predict 
+						if (prediction[id].networkMovement.size() == prediction[id].quadratic_message_number && prediction[id].localMovement.size() == prediction[id].quadratic_message_number)
+						{
+							// Set the 3 most recent local positions
+							sf::Vector2f localMovement0(prediction[id].localMovement.at(0).playerPosition);
+							sf::Vector2f localMovement1(prediction[id].localMovement.at(1).playerPosition);
+							sf::Vector2f localMovement2(prediction[id].localMovement.at(2).playerPosition);
 
-		//		sf::Vector2f m0_network(rectangles[id].prediction.NetworkDataHistory.at(0).player_position);
-		//		sf::Vector2f m1_network(rectangles[id].prediction.NetworkDataHistory.at(1).player_position);
-		//		sf::Vector2f m2_network(rectangles[id].prediction.NetworkDataHistory.at(2).player_position);
+							// Set the 3 most recent networked positions
+							sf::Vector2f networkMovement0(prediction[id].networkMovement.at(0).playerPosition);
+							sf::Vector2f networkMovement1(prediction[id].networkMovement.at(1).playerPosition);
+							sf::Vector2f networkMovement2(prediction[id].networkMovement.at(2).playerPosition);
 
-		//		float m0_time = rectangles[id].prediction.LocalDataHistory.at(0).time;
-		//		float m1_time = rectangles[id].prediction.LocalDataHistory.at(1).time;
-		//		float m2_time = rectangles[id].prediction.LocalDataHistory.at(2).time;
+							// Set the time for calculating the quadratic position 
+							float time0 = prediction[id].localMovement.at(0).time;
+							float time1 = prediction[id].localMovement.at(1).time;
+							float time2 = prediction[id].localMovement.at(2).time;
 
-		//		//float currentTime = getTime();
+							sf::Vector2f newPos = prediction[id].quadraticInterpolation(localMovement0, localMovement1, localMovement2, networkMovement0, networkMovement1, networkMovement2, time0, time1, time2, sendTime);
+							rectangles[id].setPosition(newPos);
 
-		//		sf::Vector2f newPos = rectangles[id].prediction.quadraticInterpolation(m0_local, m1_local, m2_local, m0_network, m1_network, m2_network, m0_time, m1_time, m2_time, currentTime);
-		//		rectangles[id].car.setPosition(newPos);
+							LocalMs.id = id;
+							LocalMs.playerPosition = newPos;
+							LocalMs.time = sendTime;
+						}
+					}
+			}
 
-		//		LocalMs.id = id;
-		//		LocalMs.player_position = newPos;
-		//		LocalMs.time = getTime();
+			//Render the scene
+			window.clear();
+			window.draw(floor);
+			for (int i = 0; i < 4; i++)
+			{
+				window.draw(rectangles[i]);
+			}
+			window.display();
 
-		//	}
-
-
-		//Render the scene
-		window.clear();
-		window.draw(floor);
-		for (int i = 0; i < 2; i++)
-		{
-			window.draw(rectangles[i]);
 		}
-		window.display();
-
-		}
-		
-	
-
-	return 0;
-}
+		return 0;
+	}

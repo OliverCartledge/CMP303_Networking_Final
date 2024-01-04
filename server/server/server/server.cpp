@@ -11,15 +11,19 @@ int main()
 {
 	cout << "Server Running" << endl;
 
+	// create a socket to listen
 	sf::TcpListener listener;
-	sf::SocketSelector selector;
-	bool wait = false;
+	listener.listen(2000);
+
+	// a vector of sockets storing clients and another one for their individual id's
 	std::vector<sf::TcpSocket*> clients;
 	std::vector<std::string> ID;
 
+	sf::SocketSelector selector;
+	bool wait = false;
+
 	sf::IpAddress ip = sf::IpAddress::getLocalAddress();
 	cout << "Server IP is: " << ip<<"\n";
-	listener.listen(2000);
 	selector.add(listener);
 	
 	while (!wait)
@@ -34,7 +38,7 @@ int main()
 				sf::Packet packet;
 				if (socket->receive(packet) == sf::Socket::Done)
 					packet >> id;
-				cout<< id << " has connected to the server" << endl;
+				cout << id << " has connected to the server" << endl;
 				clients.push_back(socket);
 				ID.push_back(id);
 				selector.add(*socket);
@@ -43,14 +47,6 @@ int main()
 				playerId = clients.size();
 				packet << playerId;
 				socket->send(packet);
-				if (clients.size() == 4)
-				{
-					//cout << "Maximum server limit reached" << endl;
-					
-					//listener.close();
-					
-				}
-			
 			}
 			
 			else
@@ -86,8 +82,6 @@ int main()
 
 	for (std::vector<sf::TcpSocket*>::iterator it = clients.begin(); it != clients.end(); it++)
 		delete* it;
-
-	//system("pause");
 
 	return 0;
 
