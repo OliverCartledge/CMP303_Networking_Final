@@ -93,7 +93,7 @@ int main()
 	std::cin >> IP;
 	ip = IP;
 	std::cout << "\nConnected to " << ip.toString() << "\n";
-	while (client.connect(ip, 2000) != sf::Socket::Done) {
+	while (client.connect(ip, 5000) != sf::Socket::Done) {
 		std::cout << "Failed to connect, trying again...\n";
 	}
 	std::cout << "connected to server\n";
@@ -184,7 +184,7 @@ int main()
 		//std::cout << tickTimer << endl;
 
 		//added tick timer to limit the frequency of positions being sent to reduce lag between clients
-		if (tickTimer > 0.05) {
+		if (tickTimer > 0.025) {
 			packetSend << playerID;
 
 			packetSend << rectangles[playerID].getPosition().x;
@@ -249,6 +249,7 @@ int main()
 							LocalMs.id = id;
 							LocalMs.playerPosition = newPos;
 							LocalMs.time = sendTime;
+							//cout << "X: " << newPos.x << "\nY: " << newPos.y;
 						}
 					}
 			}

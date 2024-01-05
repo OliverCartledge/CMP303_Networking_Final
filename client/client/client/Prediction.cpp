@@ -68,5 +68,6 @@ sf::Vector2f Prediction::quadraticInterpolation(sf::Vector2f& localMovement0, sf
 
 	sf::Vector2f finalPosition = lerp(local_player_pos, network_player_pos, 0.1);
 
+
 	return finalPosition;
 }

@@ -13,7 +13,7 @@ int main()
 
 	// create a socket to listen
 	sf::TcpListener listener;
-	listener.listen(2000);
+	listener.listen(5000);
 
 	// a vector of sockets storing clients and another one for their individual id's
 	std::vector<sf::TcpSocket*> clients;
